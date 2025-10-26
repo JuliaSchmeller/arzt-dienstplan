@@ -13,6 +13,7 @@
             <ul>
                 <li><a href="{{ url_for('home') }}">Start</a></li>
                 {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('calendar') }}">Kalender</a></li>
                     <li><a href="{{ url_for('auth.logout') }}">Abmelden</a></li>
                 {% else %}
                     <li><a href="{{ url_for('auth.login') }}">Anmelden</a></li>
@@ -37,5 +38,6 @@
     <footer>
         <p>&copy; 2024 Arzt-Dienstplan</p>
     </footer>
+    {% block scripts %}{% endblock %}
 </body>
 </html>
