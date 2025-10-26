@@ -12,10 +12,25 @@
         <nav>
             <ul>
                 <li><a href="{{ url_for('home') }}">Start</a></li>
+                {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('auth.logout') }}">Abmelden</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('auth.login') }}">Anmelden</a></li>
+                    <li><a href="{{ url_for('auth.register') }}">Registrieren</a></li>
+                {% endif %}
             </ul>
         </nav>
     </header>
     <main>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+            <ul class="flash-messages">
+                {% for message in messages %}
+                <li class="flash-message">{{ message }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        {% endwith %}
         {% block content %}
         {% endblock %}
     </main>

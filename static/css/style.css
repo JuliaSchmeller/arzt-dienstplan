@@ -59,3 +59,44 @@ footer {
     bottom: 0;
     width: 100%;
 }
+
+auth-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.form-group {
+    margin-bottom: 1rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.flash-messages {
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.flash-message {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-radius: 4px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
