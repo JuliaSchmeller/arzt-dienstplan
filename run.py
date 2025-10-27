@@ -1,9 +1,11 @@
-from flask import Flask, render_template, flash, redirect, url_for
+from flask import Flask, render_template, flash, redirect, url_for, request
+from markupsafe import Markup  # Änderung hier: Markup ist jetzt in markupsafe
 from flask_login import LoginManager, current_user, login_required
-from models import db, User, UserRole
+from models import db, User, UserRole, Schedule, DutyType
 from auth import auth
 from datetime import datetime, date
 from scheduling import AutoScheduler
+import calendar as cal
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dienstplan.db'
@@ -33,38 +35,98 @@ def home():
 def calendar():
     # Aktuelles Datum für die initiale Anzeige
     today = date.today()
-    year = today.year
-    month = today.month
+    year = today.year if 'year' not in request.args else int(request.args.get('year'))
+    month = today.month if 'month' not in request.args else int(request.args.get('month'))
     
-    # Hier später: Logik für das Abrufen der Dienste
+    # Lade alle Dienste für den ausgewählten Monat
+    start_date = datetime(year, month, 1)
+    end_date = datetime(year, month, cal.monthrange(year, month)[1])
+    
+    duties = Schedule.query.filter(
+        Schedule.date.between(start_date, end_date)
+    ).all()
+    
+    # Debug-Ausgabe
+    print(f"\nDienste für {month}/{year}:")
+    for duty in duties:
+        print(f"Tag {duty.date.day}: {duty.user.username} - {duty.duty_type.value}")
+    
+    # Organisiere Dienste nach Datum
+    duty_dict = {}
+    for duty in duties:
+        day = duty.date.day
+        if day not in duty_dict:
+            duty_dict[day] = {}
+        duty_dict[day][duty.duty_type.value] = duty.user.username
+    
+    # Debug-Ausgabe des duty_dict
+    print("\nDuty Dictionary:")
+    for day, day_duties in duty_dict.items():
+        print(f"Tag {day}: {day_duties}")
     
     return render_template('calendar.html', 
                          year=year, 
                          month=month, 
+                         duties=duty_dict,
                          current_user=current_user,
-                         UserRole=UserRole)
+                         UserRole=UserRole,
+                         DutyType=DutyType)
 
 @app.route('/generate-schedule/<int:year>/<int:month>')
 @login_required
 def generate_schedule(year, month):
-    # Nur Planer dürfen Dienstpläne erstellen
     if current_user.role != UserRole.PLANNER:
         flash('Keine Berechtigung für diese Aktion.')
         return redirect(url_for('calendar'))
     
     scheduler = AutoScheduler(year, month)
-    if scheduler.distribute_duties():
-        flash(f'Dienstplan für {month}/{year} wurde erfolgreich erstellt.')
-    else:
-        flash('Fehler bei der Erstellung des Dienstplans.')
+    duties = scheduler.distribute_duties()
+    summary = scheduler.get_schedule_summary()
+    
+    # Zeige strukturierte Zusammenfassung
+    flash(f'Dienstplan für {month}/{year} wurde erstellt.')
+    flash('Dienstverteilung:')
+    
+    # Erstelle HTML-Tabelle für die Zusammenfassung
+    table_html = """
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Arzt</th>
+                <th>Dienste</th>
+                <th>Rufdienste</th>
+                <th>Visiten</th>
+                <th>Arbeitszeit</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
+    
+    for doc, stats in summary.items():
+        table_html += f"""
+            <tr>
+                <td>{doc}</td>
+                <td>{stats['dienst']}</td>
+                <td>{stats['rufdienst']}</td>
+                <td>{stats['visite']}</td>
+                <td>{stats['work_percentage']}%</td>
+            </tr>
+        """
+    
+    table_html += """
+        </tbody>
+    </table>
+    """
+    
+    flash(Markup(table_html))
     
     return redirect(url_for('calendar'))
 
 @app.route('/make-planner/<username>')
 @login_required
 def make_planner(username):
-    # Nur der erste registrierte Benutzer darf weitere Planer erstellen
-    if current_user.id != 1:  # Annahme: der erste Benutzer hat ID 1
+    # Nur der erste registrierte Benutzer darf weitere Planner erstellen
+    if current_user.id != 1:
         flash('Keine Berechtigung für diese Aktion.')
         return redirect(url_for('home'))
     
@@ -72,7 +134,7 @@ def make_planner(username):
     if user:
         user.role = UserRole.PLANNER
         db.session.commit()
-        flash(f'Benutzer {username} wurde zum Planer ernannt.')
+        flash(f'Benutzer {username} wurde zum Planner ernannt.')
     else:
         flash(f'Benutzer {username} nicht gefunden.')
     
