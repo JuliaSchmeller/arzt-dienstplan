@@ -256,10 +256,6 @@ auth-container {
     border-radius: 4px;
 }
 
-body.dark-mode .calendar-legend {
-    background-color: #374151;
-}
-
 .legend-item {
     display: flex;
     align-items: center;
