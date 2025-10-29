@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Arzt-Dienstplan{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <header>
@@ -19,6 +20,7 @@
                     <li><a href="{{ url_for('auth.login') }}">Anmelden</a></li>
                     <li><a href="{{ url_for('auth.register') }}">Registrieren</a></li>
                 {% endif %}
+                <li><button id="darkModeToggle" class="theme-toggle">🌙</button></li>
             </ul>
         </nav>
     </header>
@@ -38,6 +40,25 @@
     <footer>
         <p>&copy; 2024 Arzt-Dienstplan</p>
     </footer>
+    <script>
+        // Darkmode toggle functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+        
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        if (currentTheme === 'dark') {
+            body.classList.add('dark-mode');
+            darkModeToggle.textContent = '☀️';
+        }
+        
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            const theme = body.classList.contains('dark-mode') ? 'dark' : 'light';
+            localStorage.setItem('theme', theme);
+            darkModeToggle.textContent = theme === 'dark' ? '☀️' : '🌙';
+        });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 </html>
