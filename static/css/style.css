@@ -4,6 +4,77 @@ body {
     margin: 0;
     padding: 0;
     line-height: 1.6;
+    background-color: #ffffff;
+    color: #333333;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Darkmode styles */
+body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
+}
+
+body.dark-mode header {
+    background-color: #1f2937;
+}
+
+body.dark-mode nav a {
+    color: #e0e0e0;
+}
+
+body.dark-mode .calendar-container {
+    background-color: #2d3748;
+    color: #e0e0e0;
+}
+
+body.dark-mode .calendar-grid {
+    border-color: #4a5568;
+}
+
+body.dark-mode .calendar-days-header {
+    background-color: #374151;
+    border-color: #4a5568;
+}
+
+body.dark-mode .calendar-day {
+    border-color: #4a5568;
+    background-color: #2d3748;
+}
+
+body.dark-mode .calendar-day.empty {
+    background-color: #1f2937;
+}
+
+body.dark-mode .calendar-legend {
+    background-color: #374151;
+}
+
+body.dark-mode .nav-button {
+    background-color: #374151;
+    color: #e0e0e0;
+}
+
+body.dark-mode .nav-button:hover {
+    background-color: #4a5568;
+}
+
+body.dark-mode .flash-message {
+    background-color: #7f1d1d;
+    color: #fecaca;
+    border-color: #991b1b;
+}
+
+body.dark-mode footer {
+    background-color: #1f2937;
+}
+
+.theme-toggle {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 0.5rem;
 }
 
 header {
@@ -177,11 +248,16 @@ auth-container {
 
 .calendar-legend {
     display: flex;
+    justify-content: center;
     gap: 1rem;
     margin-top: 1rem;
     padding: 1rem;
     background-color: #f8f9fa;
     border-radius: 4px;
+}
+
+body.dark-mode .calendar-legend {
+    background-color: #374151;
 }
 
 .legend-item {
@@ -197,13 +273,34 @@ auth-container {
 }
 
 .color-box.dienst {
-    background-color: #007bff;
+    background-color: #e74c3c;
 }
 
 .color-box.rufdienst {
-    background-color: #28a745;
+    background-color: #3498db;
 }
 
 .color-box.visite {
-    background-color: #ffc107;
+    background-color: #2ecc71;
+}
+
+/* Duty display styles */
+.duty {
+    margin: 2px 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: white;
+    font-size: 0.85em;
+}
+
+.duty.dienst {
+    background-color: #e74c3c;
+}
+
+.duty.rufdienst {
+    background-color: #3498db;
+}
+
+.duty.visite {
+    background-color: #2ecc71;
 }
