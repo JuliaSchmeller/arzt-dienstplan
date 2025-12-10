@@ -3,6 +3,9 @@ import calendar
 from models import User, UserRole, Schedule, DutyType, db
 from flask import current_app
 from workalendar.europe import Germany  # Für Feiertage
+import logging
+
+logger = logging.getLogger(__name__)
 
 class AutoScheduler:
     def __init__(self, year, month):
@@ -25,9 +28,9 @@ class AutoScheduler:
             Schedule.date.between(start_date, end_date)
         ).all()
         
-        print(f"\nGeladene historische Dienste von {start_date.date()} bis {end_date.date()}:")
+        logger.info(f"Geladene historische Dienste von {start_date.date()} bis {end_date.date()}:")
         for duty in historical_duties:
-            print(f"{duty.date}: {duty.user.username} - {duty.duty_type.value}")
+            logger.debug(f"{duty.date}: {duty.user.username} - {duty.duty_type.value}")
             self.duty_points[duty.user.id] += self.calculate_duty_points(
                 duty.duty_type,
                 self.is_special_day(duty.date)
@@ -165,13 +168,13 @@ class AutoScheduler:
             saturday_duties = self.get_doctor_duties(doctor_id, saturday)
             for duty in saturday_duties:
                 if duty.duty_type == DutyType.DIENST:
-                    print(f"Arzt {doctor_id} hatte Samstag Dienst, hat diesen Dienstag frei")
+                    logger.debug(f"Arzt {doctor_id} hatte Samstag Dienst, hat diesen Dienstag frei")
                     return False
         
         # Wenn Visite, dann keine anderen Dienste in der Woche
         if self.is_visite_week(doctor_id, date):
             if duty_type != DutyType.VISITE:
-                print(f"Arzt {doctor_id} hat diese Woche Visite, kann keine anderen Dienste machen")
+                logger.debug(f"Arzt {doctor_id} hat diese Woche Visite, kann keine anderen Dienste machen")
                 return False
         
         # Wenn andere Dienste in der Woche, dann keine Visite
@@ -184,7 +187,7 @@ class AutoScheduler:
                 Schedule.duty_type != DutyType.VISITE
             ).all()
             if other_duties:
-                print(f"Arzt {doctor_id} hat diese Woche andere Dienste, kann keine Visite machen")
+                logger.debug(f"Arzt {doctor_id} hat diese Woche andere Dienste, kann keine Visite machen")
                 return False
         
         # Prüfe vorherigen Tag auf Dienst
@@ -193,19 +196,19 @@ class AutoScheduler:
         
         for duty in prev_duties:
             if duty.duty_type == DutyType.DIENST:
-                print(f"Arzt {doctor_id} hatte gestern Dienst, kann heute nicht arbeiten")
+                logger.debug(f"Arzt {doctor_id} hatte gestern Dienst, kann heute nicht arbeiten")
                 return False
         
         # Prüfe Wochenend-Limit
         if self.is_weekend(date.day) and self.get_weekend_count(doctor_id) >= 2:
-            print(f"Arzt {doctor_id} hat bereits 2 Wochenenden in diesem Monat")
+            logger.debug(f"Arzt {doctor_id} hat bereits 2 Wochenenden in diesem Monat")
             return False
         
         # Prüfe auf Rufdienst-Wochenende
         if duty_type == DutyType.RUFDIENST and date.weekday() >= 5:  # Samstag oder Sonntag
             friday_duty = self.get_friday_rufdienst(date)
             if friday_duty and friday_duty.user_id != doctor_id:
-                print(f"Arzt {doctor_id} kann nicht Rufdienst am Wochenende haben, da anderer Arzt am Freitag Rufdienst hatte")
+                logger.debug(f"Arzt {doctor_id} kann nicht Rufdienst am Wochenende haben, da anderer Arzt am Freitag Rufdienst hatte")
                 return False
             elif friday_duty and friday_duty.user_id == doctor_id:
                 return True
@@ -225,7 +228,7 @@ class AutoScheduler:
                 if not existing_duty and self.can_work_on_date(doc.id, date, duty_type):
                     available_docs.append(doc)
             except Exception as e:
-                print(f"Fehler beim Prüfen der Verfügbarkeit für {doc.username}: {e}")
+                logger.error(f"Fehler beim Prüfen der Verfügbarkeit für {doc.username}: {e}")
                 continue
         
         return available_docs
@@ -241,15 +244,15 @@ class AutoScheduler:
                     duty_type=duty_type,
                     user_id=friday_duty.user_id
                 )
-                print(f"Wochenend-Rufdienst automatisch zugewiesen: {friday_duty.user.username} - {date}")
+                logger.info(f"Wochenend-Rufdienst automatisch zugewiesen: {friday_duty.user.username} - {date}")
                 return duty
             else:
-                print(f"Kein Freitags-Rufdienst gefunden für Wochenende {date}")
+                logger.warning(f"Kein Freitags-Rufdienst gefunden für Wochenende {date}")
                 return None
 
         available_docs = self.get_available_doctors(date, duty_type)
         if not available_docs:
-            print(f"Keine verfügbaren Ärzte für {date} ({duty_type})")
+            logger.warning(f"Keine verfügbaren Ärzte für {date} ({duty_type})")
             return None
         
         # Wähle Arzt basierend auf Diensttyp und Arbeitszeit
@@ -302,11 +305,11 @@ class AutoScheduler:
                 self.is_special_day(date)
             )
             
-            print(f"Dienst zugewiesen: {chosen_doc.username} - {date} - {duty_type.value}")
+            logger.info(f"Dienst zugewiesen: {chosen_doc.username} - {date} - {duty_type.value}")
             
             # Wenn Freitag-Rufdienst, gleich das ganze Wochenende zuweisen
             if duty_type == DutyType.RUFDIENST and date.weekday() == 4:  # Freitag
-                print(f"Freitag-Rufdienst: Weise Wochenende für {chosen_doc.username} zu")
+                logger.info(f"Freitag-Rufdienst: Weise Wochenende für {chosen_doc.username} zu")
                 for days_ahead in [1, 2]:  # Samstag und Sonntag
                     weekend_date = date + timedelta(days=days_ahead)
                     weekend_duty = Schedule(
@@ -319,12 +322,12 @@ class AutoScheduler:
                         True  # Wochenende
                     )
                     db.session.add(weekend_duty)
-                    print(f"Wochenend-Rufdienst zugewiesen: {chosen_doc.username} - {weekend_date}")
+                    logger.info(f"Wochenend-Rufdienst zugewiesen: {chosen_doc.username} - {weekend_date}")
             
             return duty
             
         except Exception as e:
-            print(f"Fehler bei der Dienstzuweisung: {e}")
+            logger.error(f"Fehler bei der Dienstzuweisung: {e}")
             return None
     
     def distribute_duties(self):
@@ -344,14 +347,14 @@ class AutoScheduler:
             for duty in existing_duties:
                 db.session.delete(duty)
             
-            print(f"\nStarte Dienstverteilung für {self.month}/{self.year}")
+            logger.info(f"Starte Dienstverteilung für {self.month}/{self.year}")
             
             # Verteile neue Dienste
             for day in range(1, days + 1):
                 date = datetime(self.year, self.month, day)
                 is_special = self.is_special_day(date)
                 
-                print(f"\nVerteilung für Tag {day} ({'Wochenende/Feiertag' if is_special else 'Werktag'}):")
+                logger.debug(f"Verteilung für Tag {day} ({'Wochenende/Feiertag' if is_special else 'Werktag'}):")
                 
                 # Regulärer Dienst (jeden Tag)
                 dienst = self.assign_duty(date, DutyType.DIENST)
@@ -381,10 +384,10 @@ class AutoScheduler:
             
             # Commit der Änderungen
             db.session.commit()
-            print(f"\nDienstplan erfolgreich erstellt mit {len(duties)} Diensten")
+            logger.info(f"Dienstplan erfolgreich erstellt mit {len(duties)} Diensten")
             
         except Exception as e:
-            print(f"Fehler bei der Dienstplanerstellung: {e}")
+            logger.error(f"Fehler bei der Dienstplanerstellung: {e}")
             db.session.rollback()
             return []
         
