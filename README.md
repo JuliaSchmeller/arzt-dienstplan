@@ -1,14 +1,13 @@
-# Arzt-Dienstplan
+# Arzt Dienstplan
 
-Eine Flask-basierte Webanwendung zur Verwaltung und automatisierten Erstellung von Arztdienstplänen.
+Eine Flask-Anwendung zur automatischen Erstellung und Verwaltung von Arztdienstplänen.
 
 ## Features
 
-- Automatische Dienstplanerstellung mit fairer Verteilung
-- Benutzerrollen (Planner und User)
-- Kalenderview für Dienstübersicht
-- Berücksichtigung verschiedener Diensttypen (Dienst, Rufdienst, Visite)
-- Berücksichtigung von Arbeitszeit-Prozentsätzen
+- Automatische Dienstplanverteilung basierend auf Arbeitszeit-Prozentsätzen
+- Berücksichtigung von Wochenenden und Feiertagen
+- Benutzer- und Rollenverwaltung (Planer und Ärzte)
+- Interaktiver Kalender zur Anzeige der Dienste
 
 ## Installation
 
@@ -18,145 +17,77 @@ git clone https://github.com/JuliaSchmeller/arzt-dienstplan.git
 cd arzt-dienstplan
 ```
 
-2. Virtuelle Umgebung erstellen und aktivieren:
-```bash
-python -m venv venv
-source venv/bin/activate  # Auf Windows: venv\Scripts\activate
-```
-
-3. Abhängigkeiten installieren:
+2. Abhängigkeiten installieren:
 ```bash
 pip install -r requirements.txt
 ```
 
-## Secrets / Configuration
-
-### Umgebungsvariablen konfigurieren
-
-Die Anwendung verwendet Umgebungsvariablen für sensible Konfigurationen wie SECRET_KEY und Passwörter.
-
-1. Kopieren Sie die Beispieldatei:
+3. Datenbank initialisieren:
 ```bash
-cp .env.example .env
-```
-
-2. Bearbeiten Sie `.env` und setzen Sie die erforderlichen Werte:
-
-#### SECRET_KEY (erforderlich)
-
-Der SECRET_KEY wird für Session-Sicherheit und CSRF-Schutz verwendet.
-
-**Generieren Sie einen sicheren Schlüssel:**
-```bash
-python -c 'import secrets; print(secrets.token_hex(32))'
-```
-
-**Setzen Sie den Schlüssel in der .env-Datei:**
-```
-SECRET_KEY=ihr-generierter-64-zeichen-hex-string
-```
-
-**Oder setzen Sie ihn direkt als Umgebungsvariable:**
-```bash
-export SECRET_KEY='ihr-generierter-64-zeichen-hex-string'
-```
-
-**WICHTIG:**
-- Im Produktionsmodus (`FLASK_ENV != 'development'`) **muss** SECRET_KEY gesetzt sein
-- Die Anwendung wird sich weigern zu starten, wenn SECRET_KEY in Produktion fehlt
-- Verwenden Sie **niemals** den Beispielwert aus `.env.example` in Produktion
-- Halten Sie den SECRET_KEY geheim und teilen Sie ihn nicht
-
-#### ADMIN_PASSWORD (für initiale Einrichtung)
-
-Das ADMIN_PASSWORD wird nur beim ersten Ausführen von `init_db.py` benötigt, um den ersten Admin-Benutzer zu erstellen.
-
-```bash
-export ADMIN_PASSWORD='ihr-sicheres-admin-passwort'
-```
-
-#### FLASK_ENV (optional)
-
-```bash
-export FLASK_ENV=production  # Für Produktion
-export FLASK_ENV=development  # Für Entwicklung (Standard)
-```
-
-### Alternative: python-dotenv verwenden
-
-Wenn Sie die `.env`-Datei verwenden möchten, können Sie `python-dotenv` installieren:
-
-```bash
-pip install python-dotenv
-```
-
-Dann laden Sie die Variablen automatisch, indem Sie am Anfang Ihrer Python-Skripte hinzufügen:
-```python
-from dotenv import load_dotenv
-load_dotenv()
-```
-
-## Datenbank initialisieren
-
-**Stellen Sie sicher, dass SECRET_KEY und ADMIN_PASSWORD gesetzt sind:**
-
-```bash
-export SECRET_KEY='ihr-generierter-key'
-export ADMIN_PASSWORD='ihr-admin-passwort'
 python init_db.py
 ```
 
-Dies erstellt:
-- Alle notwendigen Datenbanktabellen
-- Einen Admin-Benutzer (JuliaSchmeller) mit dem angegebenen Passwort
+## Ausführung
 
-## Anwendung starten
-
-**Produktionsmodus:**
+Starte die Anwendung mit:
 ```bash
-export SECRET_KEY='ihr-generierter-key'
-export FLASK_ENV=production
 python run.py
 ```
 
-**Entwicklungsmodus:**
+Die Anwendung ist dann unter `http://localhost:5001` erreichbar.
+
+## Logging-Konfiguration
+
+Das Logging-Level kann über die Umgebungsvariable `LOG_LEVEL` gesteuert werden.
+
+### Verfügbare Log-Level
+
+- `DEBUG`: Detaillierte Informationen, hauptsächlich für Diagnose-Zwecke
+- `INFO`: Bestätigungen, dass alles wie erwartet funktioniert
+- `WARNING`: Hinweise auf potenzielle Probleme
+- `ERROR`: Fehler, die behoben werden sollten
+
+### Verwendung
+
+**Linux/macOS:**
 ```bash
-export SECRET_KEY='dev-key'  # Oder lassen Sie es weg für automatischen Dev-Key
-export FLASK_ENV=development
+export LOG_LEVEL=DEBUG
 python run.py
 ```
 
-Die Anwendung läuft standardmäßig auf `http://localhost:5001`
+**Windows (CMD):**
+```cmd
+set LOG_LEVEL=DEBUG
+python run.py
+```
 
-## Testdaten erstellen (optional)
+**Windows (PowerShell):**
+```powershell
+$env:LOG_LEVEL="DEBUG"
+python run.py
+```
 
-Um Testbenutzer zu erstellen:
+Wenn `LOG_LEVEL` nicht gesetzt ist, wird standardmäßig `INFO` verwendet.
+
+### Beispiele
+
+Debug-Modus mit detaillierter Ausgabe:
+```bash
+LOG_LEVEL=DEBUG python run.py
+```
+
+Nur Fehler und Warnungen anzeigen:
+```bash
+LOG_LEVEL=WARNING python run.py
+```
+
+## Entwicklung
+
+### Test-Benutzer erstellen
 ```bash
 python create_test_user.py
 ```
 
-## Sicherheitshinweise
-
-1. **Niemals** echte Secrets in Git committen
-2. Halten Sie `.env` geheim und teilen Sie sie nicht
-3. Verwenden Sie starke, zufällig generierte Werte für SECRET_KEY
-4. In Produktion: Setzen Sie `FLASK_ENV=production`
-5. Ändern Sie regelmäßig Passwörter und Secrets
-6. Verwenden Sie HTTPS in Produktionsumgebungen
-
-## Migrationshinweise
-
-Wenn Sie von einer älteren Version aktualisieren, die hardcodierte Secrets enthielt:
-
-1. Generieren Sie einen neuen SECRET_KEY (siehe oben)
-2. Setzen Sie die Umgebungsvariablen
-3. Starten Sie die Anwendung neu
-4. Alle Benutzer müssen sich neu anmelden (alte Sessions sind ungültig)
-
 ## Lizenz
 
-[Bitte Lizenzinformationen einfügen]
-
-## Kontakt
-
-[Bitte Kontaktinformationen einfügen]
+Dieses Projekt ist für den internen Gebrauch bestimmt.

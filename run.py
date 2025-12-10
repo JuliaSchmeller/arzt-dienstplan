@@ -6,8 +6,16 @@ from auth import auth
 from datetime import datetime, date
 from scheduling import AutoScheduler
 import calendar as cal
+import logging
 import os
-import sys
+
+# Logging-Konfiguration
+LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
+logging.basicConfig(
+    level=getattr(logging, LOG_LEVEL.upper(), logging.INFO),
+    format='%(asctime)s %(levelname)s %(name)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dienstplan.db'
@@ -66,9 +74,9 @@ def calendar():
     ).all()
     
     # Debug-Ausgabe
-    print(f"\nDienste für {month}/{year}:")
+    logger.debug(f"Dienste für {month}/{year}:")
     for duty in duties:
-        print(f"Tag {duty.date.day}: {duty.user.username} - {duty.duty_type.value}")
+        logger.debug(f"Tag {duty.date.day}: {duty.user.username} - {duty.duty_type.value}")
     
     # Organisiere Dienste nach Datum
     duty_dict = {}
@@ -79,9 +87,9 @@ def calendar():
         duty_dict[day][duty.duty_type.value] = duty.user.username
     
     # Debug-Ausgabe des duty_dict
-    print("\nDuty Dictionary:")
+    logger.debug("Duty Dictionary:")
     for day, day_duties in duty_dict.items():
-        print(f"Tag {day}: {day_duties}")
+        logger.debug(f"Tag {day}: {day_duties}")
     
     return render_template('calendar.html', 
                          year=year, 
