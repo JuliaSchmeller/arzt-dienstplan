@@ -12,6 +12,7 @@ instance/
 
 # Sensitive data
 githubtoken
+.env
 
 # IDE files
 .vscode/

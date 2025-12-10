@@ -6,11 +6,30 @@ from auth import auth
 from datetime import datetime, date
 from scheduling import AutoScheduler
 import calendar as cal
+import os
+import sys
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///dienstplan.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # In Produktion sicher ändern!
+
+# SECRET_KEY aus Umgebungsvariable laden
+SECRET_KEY = os.environ.get('SECRET_KEY')
+
+# In Produktionsmodus (FLASK_ENV != 'development') muss SECRET_KEY gesetzt sein
+flask_env = os.environ.get('FLASK_ENV', 'production')
+if not SECRET_KEY and flask_env != 'development':
+    print("FEHLER: SECRET_KEY ist nicht gesetzt!", file=sys.stderr)
+    print("Bitte setzen Sie die Umgebungsvariable SECRET_KEY vor dem Start der Anwendung.", file=sys.stderr)
+    print("Beispiel: export SECRET_KEY='ihr-geheimer-schluessel'", file=sys.stderr)
+    sys.exit(1)
+
+# Fallback für Development-Modus (nur zu Entwicklungszwecken!)
+if not SECRET_KEY:
+    SECRET_KEY = 'dev-key-only-for-development-DO-NOT-USE-IN-PRODUCTION'
+    print("WARNUNG: Development-Modus - unsicherer SECRET_KEY wird verwendet!", file=sys.stderr)
+
+app.config['SECRET_KEY'] = SECRET_KEY
 
 # Initialisierung der Erweiterungen
 db.init_app(app)
