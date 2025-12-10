@@ -21,7 +21,7 @@ flask_env = os.environ.get('FLASK_ENV', 'production')
 if not SECRET_KEY and flask_env != 'development':
     print("FEHLER: SECRET_KEY ist nicht gesetzt!", file=sys.stderr)
     print("Bitte setzen Sie die Umgebungsvariable SECRET_KEY vor dem Start der Anwendung.", file=sys.stderr)
-    print("Beispiel: export SECRET_KEY='ihr-geheimer-schluessel'", file=sys.stderr)
+    print("Beispiel: export SECRET_KEY='your-64-character-hex-string-here'", file=sys.stderr)
     sys.exit(1)
 
 # Fallback für Development-Modus (nur zu Entwicklungszwecken!)

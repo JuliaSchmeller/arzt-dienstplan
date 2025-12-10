@@ -17,7 +17,7 @@ def init_db():
             if not admin_password:
                 print("WARNUNG: Kein Admin-User wurde erstellt!", file=sys.stderr)
                 print("Um einen Admin-User zu erstellen, setzen Sie die Umgebungsvariable ADMIN_PASSWORD", file=sys.stderr)
-                print("Beispiel: export ADMIN_PASSWORD='ihr-sicheres-passwort'", file=sys.stderr)
+                print("Beispiel: export ADMIN_PASSWORD='your-secure-password-here'", file=sys.stderr)
                 print("Dann führen Sie 'python init_db.py' erneut aus.", file=sys.stderr)
             else:
                 admin = User(
